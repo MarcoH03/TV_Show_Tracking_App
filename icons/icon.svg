@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FF6B8B"/>
+      <stop offset=".55" stop-color="#FF375F"/>
+      <stop offset="1" stop-color="#FF8A3D"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2B2340"/>
+      <stop offset="1" stop-color="#15111F"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- antenna -->
+  <path d="M400 250 L500 340 M624 250 L524 340" stroke="#fff" stroke-width="44" stroke-linecap="round"/>
+  <circle cx="392" cy="240" r="34" fill="#FFD60A"/>
+  <circle cx="632" cy="240" r="34" fill="#FFD60A"/>
+  <!-- tv body -->
+  <rect x="192" y="330" width="640" height="470" rx="120" fill="#fff"/>
+  <rect x="244" y="380" width="536" height="370" rx="84" fill="url(#screen)"/>
+  <!-- check -->
+  <path d="M392 568 L478 648 L640 474" fill="none" stroke="#30D158" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- feet -->
+  <path d="M352 800 L322 850 M672 800 L702 850" stroke="#fff" stroke-width="40" stroke-linecap="round"/>
+</svg>
