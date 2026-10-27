@@ -1,6 +1,6 @@
 // Service worker: makes the app work offline and handles notification taps.
 // Bump VERSION whenever app files change so installed copies update.
-const VERSION = 'v5';
+const VERSION = 'v6';
 const SHELL = `shell-${VERSION}`;
 const IMAGES = 'images-v1';
 const API = 'api-v1';

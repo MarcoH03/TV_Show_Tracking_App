@@ -13,7 +13,8 @@ and is hosted for free on GitHub Pages.
 - **Statuses:** you pick Watching, Rewatching or Watchlist. Rewatching tracks a fresh run without losing your first watch.
   - **Finished is automatic.** A show becomes Finished once you've watched every episode that's out and nothing new
     has a date yet. That means "all caught up for now", not necessarily that the show is over.
-    - It isn't listed as TBA in Upcoming. You still get the news and notification when a new season is announced.
+    - If the show isn't over, it stays in Upcoming under **Date TBA**, so you can see it's waiting for its next date.
+      You still get the news and notification when a new season is announced.
     - It moves back to Watching as soon as a new episode or season premiere gets a date, or if you unmark an episode.
   - **Paused:** logging episodes never changes your status. A show with progress but no status waits under *Paused* in My Shows.
   - Choosing **Finished — Seen It All** when adding a show from Discover marks every aired episode as watched.

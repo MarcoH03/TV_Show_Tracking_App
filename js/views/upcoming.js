@@ -1,5 +1,5 @@
 import { html, useState, useEffect } from '../vendor/preact-htm.js';
-import { state, hasAired } from '../store.js';
+import { state, hasAired, hasScheduled } from '../store.js';
 import { useBundles } from '../hooks.js';
 import { refreshAll, followed, markNewsRead, enableNotifications, notificationsSupported, buildCalendar } from '../sync.js';
 import { Page, Segmented, Poster, Empty, Icon, Spinner, toast, epCode, relDay, daysUntil } from '../ui.js';
@@ -36,10 +36,16 @@ export function UpcomingView() {
       const hasDatedEps = b.episodes.some(e => e.season === s.number && e.airdate);
       if (hasDatedEps) continue;
       if (s.premiereDate && daysUntil(s.premiereDate) >= 0) items.push({ b, season: s, t: new Date(s.premiereDate + 'T12:00:00').getTime() });
-      // A Finished show has nothing left to wait for until a date is set, so it isn't listed as TBA.
-      else if (!s.premiereDate && !b.episodes.some(e => e.season === s.number) && state.shows[b.show.id]?.status !== 'finished') tba.push({ b, season: s });
+      else if (!s.premiereDate && !b.episodes.some(e => e.season === s.number)) tba.push({ b, season: s });
+    }
+    // A show you've caught up on that isn't over: list it too, even before a next season is announced,
+    // so you can see what's waiting for a date.
+    if (state.shows[b.show.id]?.status === 'finished' && b.show.status !== 'Ended' && !hasScheduled(b) && !tba.some(t => t.b === b)) {
+      tba.push({ b, season: null });
     }
   }
+  // Announced seasons first, then shows still waiting for news; alphabetical within each.
+  tba.sort((x, y) => (!x.season - !y.season) || x.b.show.name.localeCompare(y.b.show.name));
   items.sort((a, b) => a.t - b.t);
   const groups = [];
   for (const it of items) {
@@ -80,11 +86,8 @@ export function UpcomingView() {
         ${groups.map(g => html`
           <div class="section-head"><h2>${g.label}</h2></div>
           <div class="group">${g.items.map(it => html`<${UpcomingRow} key=${it.ep?.id || 's' + it.season.id} item=${it} />`)}</div>`)}
-        ${tba.length > 0 && html`<div class="section-head"><h2>Announced · Date TBA</h2></div>
-          <div class="group">${tba.map(({ b, season }) => html`<a class="row show-row" key=${season.id} href=${`#/show/${b.show.id}`}>
-            <${Poster} src=${b.show.image?.medium} title=${b.show.name} size="xs" />
-            <span class="row-main"><span class="row-title">${b.show.name}</span><span class="row-sub">Season ${season.number} · premiere date not announced</span></span>
-            <span class="pill">📣</span></a>`)}</div>`}
+        ${tba.length > 0 && html`<div class="section-head"><h2>Date TBA</h2><span class="muted">${tba.length}</span></div>
+          <div class="group">${tba.map(({ b, season }) => html`<${TbaRow} key=${season ? season.id : 'show' + b.show.id} b=${b} season=${season} />`)}</div>`}
         ${bundles.length > 0 && groups.length === 0 && tba.length === 0 && html`<${Empty} emoji="😴" title="Quiet on the horizon" text="None of your shows have upcoming episodes scheduled yet." />`}
         ${bundles.length > 0 && html`<div class="button-stack padded">
           <button class="btn tinted" onClick=${exportIcs}><${Icon} name="calendar" size=${18} /> Add schedule to Calendar</button>
@@ -117,6 +120,19 @@ function UpcomingRow({ item }) {
       <span class="row-sub tiny">${relDay(item.t)}${timeLabel ? ` · ${timeLabel}` : ''}${b.show.network ? ` · ${b.show.network}` : ''}</span>
     </span>
     <span class="days"><b>${d <= 0 ? '•' : d}</b>${d > 0 ? html`<small>${d === 1 ? 'day' : 'days'}</small>` : html`<small>today</small>`}</span>
+  </a>`;
+}
+
+function TbaRow({ b, season }) {
+  const caughtUp = state.shows[b.show.id]?.status === 'finished';
+  return html`<a class="row show-row" href=${`#/show/${b.show.id}`}>
+    <${Poster} src=${b.show.image?.medium} title=${b.show.name} size="xs" />
+    <span class="row-main">
+      <span class="row-title">${b.show.name}</span>
+      <span class="row-sub">${season ? `Season ${season.number} · no date yet` : 'Next season not announced'}</span>
+      ${caughtUp && html`<span class="row-sub tiny"><span class="tag">Caught up</span></span>`}
+    </span>
+    <span class="pill">${season ? '📣' : '⏳'}</span>
   </a>`;
 }
 
