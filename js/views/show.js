@@ -1,7 +1,7 @@
 import { html, useState, useEffect, useRef } from '../vendor/preact-htm.js';
 import {
   state, STATUSES, SELECTABLE, PAUSED, setStatus, rateShow, setNotify, removeShow, markEpisodes, markUpTo,
-  progress, order, hasAired, activeSet, isWatched, isPaused,
+  progress, order, hasAired, hasScheduled, activeSet, isWatched, isPaused,
 } from '../store.js';
 import { getShowFull, getCast, getCachedShow } from '../api/tvmaze.js';
 import { getShowRating } from '../api/trakt.js';
@@ -60,11 +60,11 @@ function ShowDetail({ bundle, back }) {
     if (!next && isPaused(state.shows[show.id] || {})) toast('Progress kept — you’ll find it under Paused in My Shows.');
   };
 
-  // Finished isn't chosen: it's reached by watching every episode of a show that has ended.
+  // Finished isn't chosen: it's reached by watching everything aired while nothing new is scheduled.
   const firstWatchLeft = bundle.episodes.filter(e => hasAired(e) && !isWatched(show.id, e.id)).length;
   const finishedHint = status === 'finished'
-    ? (entry.rewatchCount ? `Seen ${entry.rewatchCount + 1}×` : 'All watched')
-    : show.status !== 'Ended' ? 'Still airing' : `${firstWatchLeft} to go`;
+    ? (entry.rewatchCount ? `Seen ${entry.rewatchCount + 1}×` : show.status === 'Ended' ? 'All watched' : 'Caught up')
+    : firstWatchLeft > 0 ? `${firstWatchLeft} to go` : hasScheduled(bundle) ? 'More coming' : '';
 
   const more = () => actionSheet({
     title: show.name,
@@ -123,7 +123,7 @@ function ShowDetail({ bundle, back }) {
               <span class="status-icon">${STATUSES[k].icon}</span>${STATUSES[k].label}
             </button>`)}
           <div class=${'status-btn state' + (status === 'finished' ? ' on' : '')} style=${`--c:${STATUSES.finished.color}`} role="status"
-            title="A show becomes Finished automatically when it has ended and you’ve watched every episode">
+            title="A show becomes Finished automatically when you’ve watched every aired episode and nothing new is scheduled yet">
             <span class="status-icon">${STATUSES.finished.icon}</span>${STATUSES.finished.label}<small>${finishedHint}</small>
           </div>
         </div>

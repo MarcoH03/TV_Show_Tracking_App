@@ -68,9 +68,11 @@ export async function quickAdd(show) {
     if (!b) { toast('Couldn’t load the episodes — check your connection.'); return; }
     const count = b.episodes.filter(e => hasAired(e)).length;
     const status = markAllWatched(b);
-    toast(status === 'finished'
-      ? `${show.name} → Finished · ${count} episodes marked as watched 🎉`
-      : `Marked all ${count} aired episodes — still airing, so it stays in Watching`, { duration: 4000 });
+    toast(status !== 'finished'
+      ? `Marked all ${count} aired episodes — new ones are already scheduled, so it stays in Watching`
+      : b.show.status === 'Ended'
+        ? `${show.name} → Finished · ${count} episodes marked as watched 🎉`
+        : `${show.name} → Finished · all ${count} aired episodes watched. It moves back to Watching when more is scheduled`, { duration: 4500 });
   };
   const remove = async () => {
     if (Object.keys(state.watched[show.id] || {}).length

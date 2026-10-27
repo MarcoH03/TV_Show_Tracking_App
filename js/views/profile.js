@@ -1,5 +1,5 @@
 import { html, useState } from '../vendor/preact-htm.js';
-import { state, update, setSetting, exportData, importData, resetAll, ensureShow, STATUSES, isPaused } from '../store.js';
+import { state, update, setSetting, exportData, importData, resetAll, ensureShow, reconcile, STATUSES, isPaused } from '../store.js';
 import { getShowFull, lookupShow, getCachedShow } from '../api/tvmaze.js';
 import { getPublicProfile, testClientId } from '../api/trakt.js';
 import { getOmdbRatings } from '../api/omdb.js';
@@ -300,9 +300,7 @@ async function importFromTrakt(username, onProgress) {
           }
         }
         entry.lastWatchedAt = Math.max(entry.lastWatchedAt || 0, latest);
-        const aired = bundle.episodes.filter(e => e.airstamp && Date.parse(e.airstamp) < Date.now());
-        const allDone = aired.length && aired.every(e => set[e.id]);
-        if (!entry.status) entry.status = allDone && bundle.show.status === 'Ended' ? 'finished' : 'watching';
+        if (!entry.status) { entry.status = 'watching'; reconcile(s, bundle); }
       } else if (item.watchlist && !entry.status) {
         entry.status = 'watchlist';
       }

@@ -89,7 +89,7 @@ function Grid({ shows, bundleOf, kind }) {
   if (!shows.length) {
     return kind === 'watchlist'
       ? html`<${Empty} emoji="🔖" title="Watchlist is empty" text="Save shows you want to start later. Tap ＋ on any show." ><a class="btn tinted" href="#/discover">Browse shows</a></${Empty}>`
-      : html`<${Empty} emoji="🏁" title="No finished shows yet" text="A show lands here automatically once it has ended and you’ve watched every episode." />`;
+      : html`<${Empty} emoji="🏁" title="No finished shows yet" text="A show lands here automatically once you’ve watched every episode that’s out and nothing new is scheduled." />`;
   }
   const sorted = [...shows].sort((a, b) => (b.lastWatchedAt || b.updatedAt || 0) - (a.lastWatchedAt || a.updatedAt || 0));
   return html`<div class="poster-grid">
@@ -97,7 +97,7 @@ function Grid({ shows, bundleOf, kind }) {
       const b = bundleOf(s.id);
       const p = progress(s.id, b);
       let sub = s.network;
-      if (kind === 'finished') sub = s.rating ? '★'.repeat(Math.floor(s.rating / 2)) + (s.rating % 2 ? '½' : '') : (s.rewatchCount ? `Watched ${s.rewatchCount + 1}×` : s.network);
+      if (kind === 'finished') sub = s.rating ? '★'.repeat(Math.floor(s.rating / 2)) + (s.rating % 2 ? '½' : '') : (s.rewatchCount ? `Watched ${s.rewatchCount + 1}×` : s.showStatus === 'Ended' ? s.network : 'Caught up');
       if (kind === 'watchlist' && b?.next) sub = `New ep ${relDay(b.next.airstamp || b.next.airdate).toLowerCase()}`;
       if (kind === 'watchlist' && p.watched) sub = `${p.watched}/${p.aired} watched`;
       return html`<${PosterCard} key=${s.id} show=${{ id: s.id, name: s.name, image: s.image }} sub=${sub} onLong=${() => quickAdd({ id: s.id, name: s.name, image: { medium: s.image } })} />`;

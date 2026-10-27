@@ -5,7 +5,9 @@ const KEY = 'tvtrack.v1';
 const listeners = new Set();
 
 // Watching / Rewatching / Watchlist are chosen by you. Finished is never picked by hand:
-// a show becomes Finished on its own once it has ended and you've watched every episode.
+// a show becomes Finished on its own once you've watched everything that has aired and nothing
+// new has a date yet. That doesn't mean the show is over — it means "all caught up until more is
+// scheduled", and it moves back to Watching as soon as a new episode or season gets a date.
 export const STATUSES = {
   watching: { label: 'Watching', color: 'var(--green)', icon: '▶︎', selectable: true },
   rewatching: { label: 'Rewatching', color: 'var(--purple)', icon: '↻', selectable: true },
@@ -112,16 +114,27 @@ export function setStatus(show, status, seasons, bundle) {
   });
 }
 
-/** True when the show has ended and every aired episode is in your watch history. */
+/**
+ * Is anything new scheduled? Only dated episodes or season premieres count: a season that's been
+ * announced without a date (or episodes listed without air dates) isn't something you can watch yet.
+ */
+export function hasScheduled(bundle, now = Date.now()) {
+  if (bundle.next && !hasAired(bundle.next, now) && (bundle.next.airdate || bundle.next.airstamp)) return true;
+  if (bundle.episodes.some(e => (e.airdate || e.airstamp) && !hasAired(e, now))) return true;
+  return bundle.seasons.some(se => se.premiereDate && new Date(se.premiereDate + 'T23:59:59').getTime() > now);
+}
+
+/** True when every aired episode is in your watch history and nothing new is scheduled yet. */
 export function isComplete(watchedSet, bundle) {
-  if (!bundle || bundle.show.status !== 'Ended') return false;
+  if (!bundle) return false;
   const aired = bundle.episodes.filter(e => hasAired(e));
-  return aired.length > 0 && aired.every(e => watchedSet?.[e.id]);
+  return aired.length > 0 && aired.every(e => watchedSet?.[e.id]) && !hasScheduled(bundle);
 }
 
 /**
  * Keep the automatic Finished state in sync with your history: finish a show once it's complete,
- * and move it back to Watching if it stops being complete (an episode unmarked, or the show is revived).
+ * and move it back to Watching if it stops being complete (an episode unmarked, new episodes aired,
+ * or a new episode / season premiere got a date).
  * Returns 'finished' when the show just became Finished.
  */
 export function reconcile(s, bundle) {
@@ -234,7 +247,9 @@ export function markEpisodes(bundle, eps, on, { log = true } = {}) {
       reconcile(s, bundle);
       message = `Rewatch #${entry.rewatchCount} complete! 🍿`;
     } else if (reconcile(s, bundle) === 'finished') {
-      message = `You finished ${bundle.show.name}! 🎉`;
+      message = bundle.show.status === 'Ended'
+        ? `You finished ${bundle.show.name}! 🎉`
+        : `All caught up on ${bundle.show.name} — it’s in Finished until more is scheduled ✨`;
     } else if (allDone) {
       message = `All caught up on ${bundle.show.name} ✨`;
     } else if (doneSeason != null) {
@@ -252,7 +267,7 @@ export function markUpTo(bundle, target) {
 
 /**
  * "I've seen it all": mark every aired episode as watched (without flooding the diary).
- * Ended shows become Finished; running ones go to Watching, caught up and waiting for more.
+ * The show becomes Finished, unless new episodes are already scheduled — then it's Watching.
  */
 export function markAllWatched(bundle) {
   const showId = bundle.show.id;

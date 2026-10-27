@@ -11,8 +11,10 @@ and is hosted for free on GitHub Pages.
 - **Find any show.** Search with posters, plus an "Airing Today" shelf. Add a Trakt key to also get Trending and Most Anticipated shelves.
 - **Seasons & episodes** with numbers, names, air dates and community ratings for each episode.
 - **Statuses:** you pick Watching, Rewatching or Watchlist. Rewatching tracks a fresh run without losing your first watch.
-  - **Finished is automatic.** A show becomes Finished once it has ended and you've watched every episode.
-    It goes back to Watching if you unmark an episode or the show comes back.
+  - **Finished is automatic.** A show becomes Finished once you've watched every episode that's out and nothing new
+    has a date yet. That means "all caught up for now", not necessarily that the show is over.
+    - It isn't listed as TBA in Upcoming. You still get the news and notification when a new season is announced.
+    - It moves back to Watching as soon as a new episode or season premiere gets a date, or if you unmark an episode.
   - **Paused:** logging episodes never changes your status. A show with progress but no status waits under *Paused* in My Shows.
   - Choosing **Finished — Seen It All** when adding a show from Discover marks every aired episode as watched.
 - **Mark episodes watched** one at a time, a whole season, or **"Watched up to here"** from any episode.

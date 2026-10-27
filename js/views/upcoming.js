@@ -36,7 +36,8 @@ export function UpcomingView() {
       const hasDatedEps = b.episodes.some(e => e.season === s.number && e.airdate);
       if (hasDatedEps) continue;
       if (s.premiereDate && daysUntil(s.premiereDate) >= 0) items.push({ b, season: s, t: new Date(s.premiereDate + 'T12:00:00').getTime() });
-      else if (!s.premiereDate && !b.episodes.some(e => e.season === s.number)) tba.push({ b, season: s });
+      // A Finished show has nothing left to wait for until a date is set, so it isn't listed as TBA.
+      else if (!s.premiereDate && !b.episodes.some(e => e.season === s.number) && state.shows[b.show.id]?.status !== 'finished') tba.push({ b, season: s });
     }
   }
   items.sort((a, b) => a.t - b.t);
