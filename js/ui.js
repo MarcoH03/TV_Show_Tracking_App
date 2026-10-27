@@ -275,6 +275,31 @@ export function Segmented({ options, value, onChange, small }) {
   </div>`;
 }
 
+/**
+ * Scope bar of pill-shaped filters (like the ones in Music or the App Store). Unlike a segmented
+ * control, every pill is sized to its own label, so names and counts never squeeze or overlap;
+ * when they don't all fit, the row scrolls sideways and keeps the selected pill in view.
+ */
+export function ScopeChips({ options, value, onChange, label }) {
+  const ref = useRef();
+  useEffect(() => {
+    const row = ref.current;
+    const on = row?.querySelector('.scope-chip.on');
+    if (!on) return;
+    const pad = 16;
+    if (on.offsetLeft - pad < row.scrollLeft) row.scrollTo({ left: on.offsetLeft - pad, behavior: 'smooth' });
+    else if (on.offsetLeft + on.offsetWidth + pad > row.scrollLeft + row.clientWidth) {
+      row.scrollTo({ left: on.offsetLeft + on.offsetWidth + pad - row.clientWidth, behavior: 'smooth' });
+    }
+  }, [value]);
+  return html`<div class="scope-chips" ref=${ref} role="tablist" aria-label=${label}>
+    ${options.map(o => html`<button key=${o.value} role="tab" aria-selected=${o.value === value}
+      class=${'scope-chip' + (o.value === value ? ' on' : '')} style=${o.color ? `--c:${o.color}` : ''} onClick=${() => onChange(o.value)}>
+      <span class="scope-dot"></span>${o.label}${o.count != null && html`<span class="scope-count">${o.count}</span>`}
+    </button>`)}
+  </div>`;
+}
+
 export function Empty({ emoji, title, text, children }) {
   return html`<div class="empty"><div class="empty-emoji">${emoji}</div><h3>${title}</h3>${text && html`<p>${text}</p>`}${children}</div>`;
 }

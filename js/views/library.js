@@ -1,7 +1,7 @@
 import { html } from '../vendor/preact-htm.js';
 import { state, STATUSES, PAUSED, isPaused, progress, markEpisodes } from '../store.js';
 import { useBundles } from '../hooks.js';
-import { Page, Segmented, Poster, ProgressBar, Empty, Icon, toast, epCode, relDay, nav } from '../ui.js';
+import { Page, ScopeChips, Poster, ProgressBar, Empty, Icon, toast, epCode, relDay, nav } from '../ui.js';
 import { PosterCard, quickAdd } from './common.js';
 import { InstallBanner } from './install.js';
 
@@ -19,12 +19,12 @@ export function LibraryView({ seg }) {
 
   const options = SEGMENTS
     .filter(k => !OPTIONAL.includes(k) || counts[k] > 0 || active === k)
-    .map(k => ({ value: k, label: (STATUSES[k] || PAUSED).label, count: counts[k] || null }));
+    .map(k => ({ value: k, label: (STATUSES[k] || PAUSED).label, color: (STATUSES[k] || PAUSED).color, count: counts[k] }));
 
   return html`
     <${Page} title="My Shows" actions=${html`<a class="nav-icon" href="#/discover" aria-label="Add a show"><${Icon} name="plus" size=${24} stroke=${2.2} /></a>`}>
       <${InstallBanner} />
-      <div class="sticky-seg"><${Segmented} options=${options} value=${active} onChange=${v => nav(`#/shows?seg=${v}`)} /></div>
+      <div class="sticky-seg"><${ScopeChips} label="Show status" options=${options} value=${active} onChange=${v => nav(`#/shows?seg=${v}`)} /></div>
       ${all.length === 0
         ? html`<${Empty} emoji="🍿" title="Your couch awaits" text="Find the shows you’re watching, rewatching or want to watch — no limits on how many.">
             <a class="btn primary" href="#/discover">Find shows</a></${Empty}>`
