@@ -10,9 +10,14 @@ and is hosted for free on GitHub Pages.
 
 - **Find any show.** Search with posters, plus an "Airing Today" shelf. Add a Trakt key to also get Trending and Most Anticipated shelves.
 - **Seasons & episodes** with numbers, names, air dates and community ratings for each episode.
-- **Statuses:** Watching, Rewatching, Watchlist, Finished. Rewatching tracks a fresh run without losing your first watch.
+- **Statuses:** you pick Watching, Rewatching or Watchlist. Rewatching tracks a fresh run without losing your first watch.
+  - **Finished is automatic.** A show becomes Finished once it has ended and you've watched every episode.
+    It goes back to Watching if you unmark an episode or the show comes back.
+  - **Paused:** logging episodes never changes your status. A show with progress but no status waits under *Paused* in My Shows.
+  - Choosing **Finished — Seen It All** when adding a show from Discover marks every aired episode as watched.
 - **Mark episodes watched** one at a time, a whole season, or **"Watched up to here"** from any episode.
   Tap an episode or long-press it. The ✓ button in *My Shows* marks the next episode.
+  Episodes that haven't aired yet can't be marked.
 - **Always see where you are.** Every show shows its last watched episode, what's next and how many are left.
   You don't have to "follow" a show to see this.
 - **Lists:** build as many lists as you like, mixing watchlist and followed shows. You can reorder them and give each one an emoji.

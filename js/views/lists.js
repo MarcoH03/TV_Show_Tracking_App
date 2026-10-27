@@ -1,5 +1,5 @@
 import { html, useState } from '../vendor/preact-htm.js';
-import { state, STATUSES, createList, renameList, deleteList, toggleInList, moveInList } from '../store.js';
+import { state, STATUSES, PAUSED, isPaused, createList, renameList, deleteList, toggleInList, moveInList } from '../store.js';
 import { searchShows } from '../api/tvmaze.js';
 import { Page, Poster, Empty, Icon, openSheet, actionSheet, confirmSheet, toast, nav } from '../ui.js';
 import { PosterCard, EMOJIS, StatusBadge } from './common.js';
@@ -92,7 +92,7 @@ export function ListDetailView({ id }) {
             <button class="nav-icon danger" onClick=${() => toggleInList(list.id, s)} aria-label="Remove"><${Icon} name="trash" size=${20} /></button>
           </div>`)}</div>`
         : html`<div class="poster-grid">${shows.map(s => html`<${PosterCard} key=${s.id} show=${{ id: s.id, name: s.name, image: s.image }}
-            sub=${s.status ? STATUSES[s.status].label : 'Not tracked'} />`)}</div>`)}
+            sub=${s.status ? STATUSES[s.status].label : isPaused(s) ? PAUSED.label : 'Not tracked'} />`)}</div>`)}
     </${Page}>`;
 }
 
@@ -105,7 +105,7 @@ function Picker({ listId, close }) {
   const list = state.lists.find(l => l.id === listId);
   const [q, setQ] = useState('');
   const [remote, setRemote] = useState(null);
-  const library = Object.values(state.shows).filter(s => s.status)
+  const library = Object.values(state.shows).filter(s => s.status || isPaused(s))
     .sort((a, b) => (a.status === 'watchlist') - (b.status === 'watchlist') || a.name.localeCompare(b.name));
   const filtered = q ? library.filter(s => s.name.toLowerCase().includes(q.toLowerCase())) : library;
   const search = async e => {
@@ -131,7 +131,7 @@ function Picker({ listId, close }) {
         <input type="search" value=${q} onInput=${e => { setQ(e.target.value); setRemote(null); }} placeholder="Filter or search all shows" enterkeyhint="search" aria-label="Search" />
       </form>
       ${filtered.length > 0 && html`<div class="section-head"><h2>Your Shows</h2></div>
-        <div class="group">${filtered.map(s => html`<${Row} key=${s.id} show=${s} sub=${html`<${StatusBadge} status=${s.status} />`} />`)}</div>`}
+        <div class="group">${filtered.map(s => html`<${Row} key=${s.id} show=${s} sub=${html`<${StatusBadge} status=${s.status || 'paused'} />`} />`)}</div>`}
       ${q && remote === null && html`<button class="btn tinted wide" onClick=${search}>Search TVmaze for “${q}”</button>`}
       ${remote === 'loading' && html`<p class="footnote center">Searching…</p>`}
       ${Array.isArray(remote) && html`<div class="section-head"><h2>All Shows</h2></div>

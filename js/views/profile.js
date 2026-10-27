@@ -1,5 +1,5 @@
 import { html, useState } from '../vendor/preact-htm.js';
-import { state, update, setSetting, exportData, importData, resetAll, ensureShow, STATUSES } from '../store.js';
+import { state, update, setSetting, exportData, importData, resetAll, ensureShow, STATUSES, isPaused } from '../store.js';
 import { getShowFull, lookupShow, getCachedShow } from '../api/tvmaze.js';
 import { getPublicProfile, testClientId } from '../api/trakt.js';
 import { getOmdbRatings } from '../api/omdb.js';
@@ -29,7 +29,7 @@ export function ProfileView({ section }) {
   return html`
     <${Page} title="Profile">
       <div class="stats">
-        <div class="stat"><b>${shows.filter(s => s.status).length}</b><span>Shows</span></div>
+        <div class="stat"><b>${shows.filter(s => s.status || isPaused(s)).length}</b><span>Shows</span></div>
         <div class="stat"><b>${eps.toLocaleString()}</b><span>Episodes</span></div>
         <div class="stat"><b>${minutes ? Math.round(minutes / 60).toLocaleString() : '—'}</b><span>Hours</span></div>
         <div class="stat"><b>${Object.keys(state.epRatings).length + ratings.length}</b><span>Ratings</span></div>

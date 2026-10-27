@@ -94,7 +94,16 @@ function App() {
 render(html`<${App} />`, document.getElementById('app'));
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW registration failed', e));
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(e => console.warn('SW registration failed', e));
+  // When a new version takes over, reload once so you're never running half old, half new code.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    reloaded = true;
+    flush();
+    location.reload();
+  });
   navigator.serviceWorker.addEventListener('message', e => {
     if (e.data?.type === 'navigate' && e.data.url) location.hash = e.data.url.replace(/^.*#/, '#');
   });

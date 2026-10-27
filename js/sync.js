@@ -2,7 +2,7 @@
 //  • a new season is announced (with its premiere date once known)
 //  • a premiere date is set or changes
 //  • an episode is about to air / just aired
-import { state, update, ensureShow, hasAired, order } from './store.js';
+import { state, update, ensureShow, reconcile, hasAired, order } from './store.js';
 import { getShowFull } from './api/tvmaze.js';
 import { fmtDate, epCode, relDay } from './ui.js';
 
@@ -43,7 +43,7 @@ export function refreshAll({ force = false, onProgress } = {}) {
     }));
 
     update(s => {
-      for (const b of fresh) if (s.shows[b.show.id]) ensureShow(s, b.show, b.seasons);
+      for (const b of fresh) if (s.shows[b.show.id]) { ensureShow(s, b.show, b.seasons); reconcile(s, b); }
       for (const n of news) {
         if (s.news.some(x => x.id === n.id)) continue;
         s.news.unshift(n);

@@ -276,6 +276,7 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 .check-btn.big:active { background: var(--accent); color: #fff; transform: scale(.9); }
 .check-btn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
 .check-btn.pop { animation: pop .4s var(--spring); }
+.check-btn.locked { border-style: dashed; border-color: var(--fill); color: var(--label3); cursor: default; }
 @keyframes pop { 0% { transform: scale(.6); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
 
 .add-btn { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 17px; flex: none; color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
@@ -322,6 +323,13 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 .status-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 15px; font-size: 15px; background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c); transition: all .25s var(--spring); }
 .status-btn.on { background: var(--c); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 16px color-mix(in srgb, var(--c) 40%, transparent); }
 .status-btn.on .status-icon { background: rgba(255, 255, 255, .25); color: #fff; transform: scale(1.08) rotate(-6deg); }
+/* Finished is a state you reach, not a button: drawn as a dashed tile until earned. */
+.status-btn.state { cursor: default; background: transparent; box-shadow: inset 0 0 0 1.5px var(--fill); }
+.status-btn.state:not(.on) .status-icon { background: var(--fill2); color: var(--label3); }
+.status-btn.state.on { background: var(--c); box-shadow: 0 6px 16px color-mix(in srgb, var(--c) 40%, transparent); }
+.status-btn small { font-size: 10px; font-weight: 500; opacity: .8; margin-top: -2px; }
+.status-note { display: flex; align-items: center; gap: 8px; margin: 10px 4px 0; }
+.status-note .status-badge { margin: 0; flex: none; }
 
 .card { background: var(--bg-elev); border-radius: 16px; padding: 16px; margin-top: 16px; }
 .eyebrow { font-size: 13px; font-weight: 600; color: var(--label2); text-transform: uppercase; letter-spacing: .4px; }
@@ -331,10 +339,13 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 .ring { --size: 58px; width: var(--size); height: var(--size); border-radius: 50%; display: grid; place-items: center;
   background: conic-gradient(var(--accent) calc(var(--p) * 360deg), var(--fill) 0); }
 .ring span { display: grid; place-items: center; width: calc(var(--size) - 12px); height: calc(var(--size) - 12px); border-radius: 50%; background: var(--bg-elev); font: 700 14px var(--font-round); }
-.progress-rows { display: grid; gap: 8px; margin: 14px 0 4px; font-size: 15px; }
-.progress-rows > div { display: flex; gap: 10px; align-items: baseline; }
+.progress-rows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 14px 0 4px; font-size: 15px; }
+.progress-rows > div { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
 .progress-rows .label { flex: none; width: 92px; color: var(--label2); font-size: 13px; }
-.progress-rows span:last-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progress-rows span:last-child {
+  flex: 1; min-width: 0; overflow: hidden; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3;
+}
 .progress-card .btn { margin-top: 12px; width: 100%; }
 
 .callout { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 11%, var(--bg-elev)); color: var(--label); }
@@ -364,14 +375,15 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 .summary .clamp { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .summary .link { padding: 4px 0; font-size: 15px; }
 
-.stars { display: inline-flex; gap: 2px; touch-action: none; cursor: pointer; }
+.stars { display: inline-flex; gap: 0; touch-action: none; cursor: pointer; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; border-radius: 8px; }
 .stars.readonly { cursor: default; }
 .star { position: relative; display: block; width: var(--s); height: var(--s); }
 .star svg { display: block; }
 .star-bg { fill: var(--fill); }
 .star-fill { position: absolute; inset: 0 auto 0 0; overflow: hidden; transition: width .12s; }
 .star-fill path { fill: var(--star); }
-.stars:not(.readonly) .star:active { transform: scale(1.15); }
+.star { transition: transform .18s var(--spring); }
+.stars.previewing .star.lit { transform: scale(1.12); }
 
 .season-chips { display: flex; gap: 8px; overflow-x: auto; margin: 0 calc(-1 * var(--gutter)); padding: 2px var(--gutter) 10px; scrollbar-width: none; }
 .season-chips::-webkit-scrollbar { display: none; }

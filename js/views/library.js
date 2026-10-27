@@ -1,22 +1,25 @@
 import { html } from '../vendor/preact-htm.js';
-import { state, STATUSES, progress, markEpisodes } from '../store.js';
+import { state, STATUSES, PAUSED, isPaused, progress, markEpisodes } from '../store.js';
 import { useBundles } from '../hooks.js';
 import { Page, Segmented, Poster, ProgressBar, Empty, Icon, toast, epCode, relDay, nav } from '../ui.js';
 import { PosterCard, quickAdd } from './common.js';
 import { InstallBanner } from './install.js';
 
-const SEGMENTS = ['watching', 'rewatching', 'watchlist', 'finished'];
+// "paused" isn't a status you pick: it's shows with logged progress but no status.
+const SEGMENTS = ['watching', 'rewatching', 'paused', 'watchlist', 'finished'];
+const OPTIONAL = ['rewatching', 'paused'];
+const segOf = s => s.status || (isPaused(s) ? 'paused' : null);
 
 export function LibraryView({ seg }) {
-  const all = Object.values(state.shows).filter(s => s.status);
-  const counts = Object.fromEntries(SEGMENTS.map(k => [k, all.filter(s => s.status === k).length]));
+  const all = Object.values(state.shows).filter(segOf);
+  const counts = Object.fromEntries(SEGMENTS.map(k => [k, all.filter(s => segOf(s) === k).length]));
   const active = SEGMENTS.includes(seg) ? seg : 'watching';
-  const shows = all.filter(s => s.status === active);
+  const shows = all.filter(s => segOf(s) === active);
   const bundleOf = useBundles(shows.map(s => s.id));
 
   const options = SEGMENTS
-    .filter(k => k !== 'rewatching' || counts.rewatching > 0 || active === 'rewatching')
-    .map(k => ({ value: k, label: STATUSES[k].label, count: counts[k] || null }));
+    .filter(k => !OPTIONAL.includes(k) || counts[k] > 0 || active === k)
+    .map(k => ({ value: k, label: (STATUSES[k] || PAUSED).label, count: counts[k] || null }));
 
   return html`
     <${Page} title="My Shows" actions=${html`<a class="nav-icon" href="#/discover" aria-label="Add a show"><${Icon} name="plus" size=${24} stroke=${2.2} /></a>`}>
@@ -25,16 +28,22 @@ export function LibraryView({ seg }) {
       ${all.length === 0
         ? html`<${Empty} emoji="🍿" title="Your couch awaits" text="Find the shows you’re watching, rewatching or want to watch — no limits on how many.">
             <a class="btn primary" href="#/discover">Find shows</a></${Empty}>`
-        : active === 'watching' || active === 'rewatching'
-          ? html`<${WatchingList} shows=${shows} bundleOf=${bundleOf} rewatch=${active === 'rewatching'} />`
+        : active === 'watching' || active === 'rewatching' || active === 'paused'
+          ? html`<${WatchingList} shows=${shows} bundleOf=${bundleOf} kind=${active} />`
           : html`<${Grid} shows=${shows} bundleOf=${bundleOf} kind=${active} />`}
     </${Page}>`;
 }
 
-function WatchingList({ shows, bundleOf, rewatch }) {
+const EMPTY = {
+  watching: ['📺', 'Nothing in progress', 'Set a show to Watching and it’ll show up here with its next episode.'],
+  rewatching: ['🔁', 'Nothing on repeat', 'Open a finished show and choose Rewatching to track a new run.'],
+  paused: ['⏸️', 'Nothing paused', 'Shows you’ve logged episodes for, without a status, wait here.'],
+};
+
+function WatchingList({ shows, bundleOf, kind }) {
   if (!shows.length) {
-    return html`<${Empty} emoji=${rewatch ? '🔁' : '📺'} title=${rewatch ? 'Nothing on repeat' : 'Nothing in progress'}
-      text=${rewatch ? 'Open a finished show and choose Rewatching to track a new run.' : 'Mark an episode as watched or set a show to Watching and it’ll show up here.'} />`;
+    const [emoji, title, text] = EMPTY[kind];
+    return html`<${Empty} emoji=${emoji} title=${title} text=${text} />`;
   }
   const rows = shows.map(s => ({ s, b: bundleOf(s.id), p: progress(s.id, bundleOf(s.id)) }));
   const upNext = rows.filter(r => !r.b || r.p.next).sort((a, b) => (b.s.lastWatchedAt || b.s.addedAt) - (a.s.lastWatchedAt || a.s.addedAt));
@@ -80,7 +89,7 @@ function Grid({ shows, bundleOf, kind }) {
   if (!shows.length) {
     return kind === 'watchlist'
       ? html`<${Empty} emoji="🔖" title="Watchlist is empty" text="Save shows you want to start later. Tap ＋ on any show." ><a class="btn tinted" href="#/discover">Browse shows</a></${Empty}>`
-      : html`<${Empty} emoji="🏁" title="No finished shows yet" text="When you watch the last episode of an ended show it lands here automatically." />`;
+      : html`<${Empty} emoji="🏁" title="No finished shows yet" text="A show lands here automatically once it has ended and you’ve watched every episode." />`;
   }
   const sorted = [...shows].sort((a, b) => (b.lastWatchedAt || b.updatedAt || 0) - (a.lastWatchedAt || a.updatedAt || 0));
   return html`<div class="poster-grid">
@@ -91,7 +100,6 @@ function Grid({ shows, bundleOf, kind }) {
       if (kind === 'finished') sub = s.rating ? '★'.repeat(Math.floor(s.rating / 2)) + (s.rating % 2 ? '½' : '') : (s.rewatchCount ? `Watched ${s.rewatchCount + 1}×` : s.network);
       if (kind === 'watchlist' && b?.next) sub = `New ep ${relDay(b.next.airstamp || b.next.airdate).toLowerCase()}`;
       if (kind === 'watchlist' && p.watched) sub = `${p.watched}/${p.aired} watched`;
-      if (kind === 'finished' && b && p.left > 0 && b.show.status !== 'Ended') sub = `${p.left} new episode${p.left === 1 ? '' : 's'}`;
       return html`<${PosterCard} key=${s.id} show=${{ id: s.id, name: s.name, image: s.image }} sub=${sub} onLong=${() => quickAdd({ id: s.id, name: s.name, image: { medium: s.image } })} />`;
     })}
   </div>`;

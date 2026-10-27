@@ -1,11 +1,11 @@
 // Pieces shared between screens: add-to-list sheet, status picker, episode sheet, show rows.
 import { html, useState } from '../vendor/preact-htm.js';
 import {
-  state, STATUSES, setStatus, toggleInList, createList, markEpisodes, markUpTo, rateEpisode,
+  state, STATUSES, SELECTABLE, PAUSED, setStatus, toggleInList, createList, markEpisodes, markUpTo, markAllWatched, removeShow, rateEpisode,
   isActiveWatched, hasAired, activeSet,
 } from '../store.js';
 import { getShowFull } from '../api/tvmaze.js';
-import { Icon, Poster, Stars, openSheet, actionSheet, toast, epCode, fmtDate, relDay, daysUntil } from '../ui.js';
+import { Icon, Poster, Stars, openSheet, actionSheet, confirmSheet, toast, epCode, fmtDate, relDay, daysUntil } from '../ui.js';
 
 export const EMOJIS = ['🍿', '📺', '🎬', '⭐️', '❤️', '🔥', '👻', '😂', '🧠', '🌙', '🚀', '🐉', '🕵️', '🏆', '🎄', '☕️'];
 
@@ -54,27 +54,52 @@ export async function quickAdd(show) {
   let bundle = null;
   const ensureBundle = async () => (bundle ||= await getShowFull(show.id).catch(() => null));
   const apply = async status => {
+    if (entry?.status === 'finished' && status !== 'rewatching') {
+      toast('You’ve seen every episode — choose Rewatching to watch it again.');
+      return;
+    }
     const b = await ensureBundle();
-    setStatus(b?.show || show, status, b?.seasons);
-    toast(status ? `${show.name} → ${STATUSES[status].label}` : `Removed ${show.name}`);
+    setStatus(b?.show || show, status, b?.seasons, b);
+    toast(`${show.name} → ${STATUSES[status].label}`);
+  };
+  // Picking Finished here means "I've seen it all": every aired episode gets marked as watched.
+  const finishAll = async () => {
+    const b = await ensureBundle();
+    if (!b) { toast('Couldn’t load the episodes — check your connection.'); return; }
+    const count = b.episodes.filter(e => hasAired(e)).length;
+    const status = markAllWatched(b);
+    toast(status === 'finished'
+      ? `${show.name} → Finished · ${count} episodes marked as watched 🎉`
+      : `Marked all ${count} aired episodes — still airing, so it stays in Watching`, { duration: 4000 });
+  };
+  const remove = async () => {
+    if (Object.keys(state.watched[show.id] || {}).length
+      && !(await confirmSheet({ title: `Remove ${show.name}?`, message: 'This deletes your watch history and ratings for this show.', confirm: 'Remove' }))) return;
+    removeShow(show.id);
+    toast(`Removed ${show.name}`);
   };
   actionSheet({
     title: show.name,
     actions: [
-      ...Object.entries(STATUSES).map(([k, v]) => ({
-        label: (entry?.status === k ? '✓ ' : '') + v.label,
-        icon: v.icon,
+      ...SELECTABLE.map(k => ({
+        label: (entry?.status === k ? '✓ ' : '') + STATUSES[k].label,
+        icon: STATUSES[k].icon,
         onClick: () => apply(k),
       })),
+      {
+        label: entry?.status === 'finished' ? '✓ Finished' : 'Finished — Seen It All',
+        icon: STATUSES.finished.icon,
+        onClick: () => (entry?.status === 'finished' ? toast('Already finished 🎉') : finishAll()),
+      },
       { label: 'Add to List…', icon: '☰', onClick: () => openAddToList(show) },
-      ...(entry?.status ? [{ label: 'Stop Tracking', destructive: true, onClick: () => apply(null) }] : []),
+      ...(entry ? [{ label: 'Remove from My Shows', destructive: true, onClick: remove }] : []),
     ],
   });
 }
 
 export function StatusBadge({ status }) {
   if (!status) return null;
-  const s = STATUSES[status];
+  const s = STATUSES[status] || PAUSED;
   return html`<span class="status-badge" style=${`--c:${s.color}`}>${s.label}</span>`;
 }
 
@@ -91,6 +116,12 @@ export function PosterCard({ show, sub, onLong }) {
 }
 
 // ---------- Episode detail sheet ----------
+
+function airsWhen(ep) {
+  if (!ep.airdate) return 'on a date to be announced';
+  const r = relDay(ep.airstamp || ep.airdate);
+  return r === 'Today' || r === 'Tomorrow' ? r.toLowerCase() : `on ${r}`;
+}
 
 export function openEpisode(bundle, ep) {
   openSheet(({ close }) => html`<${EpisodeSheet} bundle=${bundle} ep=${ep} close=${close} />`);
@@ -112,7 +143,7 @@ function EpisodeSheet({ bundle, ep, close }) {
     toast(msg || `Marked everything up to ${epCode(ep)} as watched`);
     close();
   };
-  const before = bundle.episodes.filter(e => (e.season < ep.season || (e.season === ep.season && e.number < ep.number)) && !activeSet(showId)[e.id]).length;
+  const before = bundle.episodes.filter(e => hasAired(e) && (e.season < ep.season || (e.season === ep.season && e.number < ep.number)) && !activeSet(showId)[e.id]).length;
   return html`
     <div class="sheet-header"><span></span><h2>${epCode(ep)}</h2><button class="link" onClick=${close}>Done</button></div>
     <div class="sheet-body episode-sheet">
@@ -138,14 +169,14 @@ function EpisodeSheet({ bundle, ep, close }) {
         </div>`}
       </div>
 
-      <div class="button-stack">
+      ${(aired || watched) && html`<div class="button-stack">
         <button class=${'btn ' + (watched ? 'secondary' : 'primary')} onClick=${toggle}>
           <${Icon} name="check" size=${18} stroke=${2.6} /> ${watched ? 'Watched ✓ — tap to undo' : 'Mark as Watched'}
         </button>
-        ${before > 0 && html`<button class="btn tinted" onClick=${upTo}>
+        ${aired && before > 0 && html`<button class="btn tinted" onClick=${upTo}>
           Watched up to here <small>(+${before + (watched ? 0 : 1)} episodes)</small>
         </button>`}
-      </div>
-      ${!aired && html`<p class="footnote">${relDay(ep.airstamp || ep.airdate)} — you’ll get a heads-up if notifications are on.</p>`}
+      </div>`}
+      ${!aired && html`<p class="footnote">Airs ${airsWhen(ep)}. You can mark it as watched once it’s out — you’ll get a heads-up if notifications are on.</p>`}
     </div>`;
 }

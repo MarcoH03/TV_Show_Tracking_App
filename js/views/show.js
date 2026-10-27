@@ -1,7 +1,7 @@
 import { html, useState, useEffect, useRef } from '../vendor/preact-htm.js';
 import {
-  state, STATUSES, setStatus, rateShow, setNotify, removeShow, markEpisodes, markUpTo,
-  progress, order, hasAired, activeSet, isWatched,
+  state, STATUSES, SELECTABLE, PAUSED, setStatus, rateShow, setNotify, removeShow, markEpisodes, markUpTo,
+  progress, order, hasAired, activeSet, isWatched, isPaused,
 } from '../store.js';
 import { getShowFull, getCast, getCachedShow } from '../api/tvmaze.js';
 import { getShowRating } from '../api/trakt.js';
@@ -51,17 +51,20 @@ function ShowDetail({ bundle, back }) {
 
   const choose = st => {
     const next = status === st ? null : st;
-    if (next === 'rewatching' && Object.keys(state.watched[show.id] || {}).length === 0) {
-      toast('Rewatching tracks a fresh run — your first watch stays saved.');
+    if (status === 'finished' && next !== 'rewatching') {
+      toast('You’ve seen every episode — choose Rewatching to watch it again.');
+      return;
     }
-    setStatus(show, next, seasons);
-    if (next === 'finished' && prog.left > 0) {
-      toast(`Mark all ${prog.left} remaining episodes as watched?`, {
-        action: 'Mark all', duration: 5000,
-        onAction: () => markEpisodes(bundle, bundle.episodes.filter(e => hasAired(e)), true),
-      });
-    }
+    if (next === 'rewatching') toast('Rewatching tracks a fresh run — your first watch stays saved.');
+    setStatus(show, next, seasons, bundle);
+    if (!next && isPaused(state.shows[show.id] || {})) toast('Progress kept — you’ll find it under Paused in My Shows.');
   };
+
+  // Finished isn't chosen: it's reached by watching every episode of a show that has ended.
+  const firstWatchLeft = bundle.episodes.filter(e => hasAired(e) && !isWatched(show.id, e.id)).length;
+  const finishedHint = status === 'finished'
+    ? (entry.rewatchCount ? `Seen ${entry.rewatchCount + 1}×` : 'All watched')
+    : show.status !== 'Ended' ? 'Still airing' : `${firstWatchLeft} to go`;
 
   const more = () => actionSheet({
     title: show.name,
@@ -115,11 +118,17 @@ function ShowDetail({ bundle, back }) {
 
       <div class="page-body show-body">
         <div class="status-picker" role="group" aria-label="Status">
-          ${Object.entries(STATUSES).map(([k, v]) => html`
-            <button class=${'status-btn' + (status === k ? ' on' : '')} style=${`--c:${v.color}`} onClick=${() => choose(k)} aria-pressed=${status === k}>
-              <span class="status-icon">${v.icon}</span>${v.label}
+          ${SELECTABLE.map(k => html`
+            <button class=${'status-btn' + (status === k ? ' on' : '')} style=${`--c:${STATUSES[k].color}`} onClick=${() => choose(k)} aria-pressed=${status === k}>
+              <span class="status-icon">${STATUSES[k].icon}</span>${STATUSES[k].label}
             </button>`)}
+          <div class=${'status-btn state' + (status === 'finished' ? ' on' : '')} style=${`--c:${STATUSES.finished.color}`} role="status"
+            title="A show becomes Finished automatically when it has ended and you’ve watched every episode">
+            <span class="status-icon">${STATUSES.finished.icon}</span>${STATUSES.finished.label}<small>${finishedHint}</small>
+          </div>
         </div>
+        ${!status && isPaused(entry || { id: show.id }) && html`<p class="footnote status-note">
+          <span class="status-badge" style=${`--c:${PAUSED.color}`}>${PAUSED.label}</span> Your progress is saved. Choose Watching when you pick it back up.</p>`}
 
         ${prog.watched > 0 || status === 'watching' || status === 'rewatching' ? html`<${ProgressCard} bundle=${bundle} prog=${prog} entry=${entry} />` : null}
 
@@ -273,10 +282,13 @@ function EpisodeRow({ bundle, ep, watched, seenBefore }) {
   };
   const menu = () => actionSheet({
     title: `${epCode(ep)} · ${ep.name}`,
+    message: aired ? null : 'This episode hasn’t aired yet, so it can’t be marked as watched.',
     actions: [
-      { label: watched ? 'Mark as Unwatched' : 'Mark as Watched', icon: '✓', onClick: () => { const m = markEpisodes(bundle, [ep], !watched); if (m) toast(m); } },
-      { label: `Watched Up to ${epCode(ep)}`, icon: '⤓', onClick: () => { const m = markUpTo(bundle, ep); toast(m || `Marked up to ${epCode(ep)} ✓`); } },
-      { label: 'Rate & Details…', icon: '★', onClick: () => openEpisode(bundle, ep) },
+      ...(aired ? [
+        { label: watched ? 'Mark as Unwatched' : 'Mark as Watched', icon: '✓', onClick: () => { const m = markEpisodes(bundle, [ep], !watched); if (m) toast(m); } },
+        { label: `Watched Up to ${epCode(ep)}`, icon: '⤓', onClick: () => { const m = markUpTo(bundle, ep); toast(m || `Marked up to ${epCode(ep)} ✓`); } },
+      ] : []),
+      { label: aired ? 'Rate & Details…' : 'Details…', icon: aired ? '★' : 'ℹ︎', onClick: () => openEpisode(bundle, ep) },
       {
         label: `Unwatch From ${epCode(ep)} Onward`, icon: '↺', destructive: true,
         onClick: () => markEpisodes(bundle, bundle.episodes.filter(e => e.season > ep.season || (e.season === ep.season && e.number >= ep.number)), false),
@@ -298,9 +310,11 @@ function EpisodeRow({ bundle, ep, watched, seenBefore }) {
           ${seenBefore && !watched && html` · <span class="seen">seen</span>`}
         </span>
       </span>
-      <button class=${'check-btn' + (watched ? ' on' : '') + (pop ? ' pop' : '')} onClick=${toggle} aria-label=${watched ? 'Mark unwatched' : 'Mark watched'} aria-pressed=${watched}>
-        <${Icon} name="check" size=${16} stroke=${3} />
-      </button>
+      ${aired || watched
+        ? html`<button class=${'check-btn' + (watched ? ' on' : '') + (pop ? ' pop' : '')} onClick=${toggle} aria-label=${watched ? 'Mark unwatched' : 'Mark watched'} aria-pressed=${watched}>
+            <${Icon} name="check" size=${16} stroke=${3} />
+          </button>`
+        : html`<span class="check-btn locked" aria-label="Not aired yet" title="Not aired yet"><${Icon} name="calendar" size=${15} stroke=${2} /></span>`}
     </div>`;
 }
 

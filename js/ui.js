@@ -163,28 +163,72 @@ export function Poster({ src, title, size = 'md', badge, onClick, href }) {
 
 // ---------- Stars (Letterboxd-style half stars, value 0-10) ----------
 
+/**
+ * Rating input. Tap a star to fill it completely; tap the same star again for half, again to clear.
+ * Drag across the stars for half-star precision; the value under your finger is what's kept on release.
+ * Uses pointer events only (one code path for touch, mouse and pen) so taps and drags can't fight.
+ */
 export function Stars({ value, onChange, size = 28, readonly }) {
   const ref = useRef();
-  const [hover, setHover] = useState(null);
-  const v = hover ?? value ?? 0;
-  const fromEvent = e => {
+  const drag = useRef(null);
+  const [preview, setPreview] = useState(null);
+  const v = preview ?? value ?? 0;
+
+  // Which star (0-4) is under the pointer, and how far across it (0-1).
+  const locate = e => {
     const r = ref.current.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
-    return Math.max(1, Math.min(10, Math.ceil((x / r.width) * 10)));
+    const x = Math.max(0, Math.min(r.width - 0.01, e.clientX - r.left));
+    const cell = r.width / 5;
+    return { i: Math.floor(x / cell), frac: (x % cell) / cell };
   };
+  const dragValue = ({ i, frac }) => i * 2 + (frac < 0.5 ? 1 : 2);
+
   const handlers = readonly ? {} : {
-    onPointerMove: e => e.pointerType === 'mouse' && setHover(fromEvent(e)),
-    onPointerLeave: () => setHover(null),
-    onTouchMove: e => { e.preventDefault(); setHover(fromEvent(e)); },
-    onTouchEnd: e => { if (hover != null) { e.preventDefault(); onChange(hover === value ? null : hover); setHover(null); } },
-    onClick: e => { const n = fromEvent(e); onChange(n === value ? null : n); setHover(null); },
+    onPointerDown: e => {
+      if (e.button > 0) return;
+      e.preventDefault();
+      ref.current.setPointerCapture?.(e.pointerId);
+      drag.current = { x: e.clientX, moved: false, start: locate(e) };
+    },
+    onPointerMove: e => {
+      if (!drag.current) {
+        if (e.pointerType === 'mouse') setPreview(locate(e).i * 2 + 2);
+        return;
+      }
+      if (Math.abs(e.clientX - drag.current.x) > 6) drag.current.moved = true;
+      if (drag.current.moved) setPreview(dragValue(locate(e)));
+    },
+    onPointerUp: e => {
+      const d = drag.current;
+      drag.current = null;
+      if (!d) return;
+      let next;
+      if (d.moved) {
+        next = dragValue(locate(e));
+      } else {
+        const full = d.start.i * 2 + 2;
+        next = value === full ? full - 1 : value === full - 1 ? null : full;
+      }
+      setPreview(null);
+      if (next !== value) onChange(next);
+    },
+    onPointerCancel: () => { drag.current = null; setPreview(null); },
+    onPointerLeave: e => { if (e.pointerType === 'mouse' && !drag.current) setPreview(null); },
+    onKeyDown: e => {
+      const step = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+      if (!step) return;
+      e.preventDefault();
+      const next = Math.max(0, Math.min(10, (value || 0) + step));
+      onChange(next || null);
+    },
   };
   return html`
-    <div class=${'stars' + (readonly ? ' readonly' : '')} ref=${ref} style=${`--s:${size}px`} role=${readonly ? 'img' : 'slider'}
-      aria-label=${`Rating ${v / 2} of 5`} aria-valuemin="0" aria-valuemax="10" aria-valuenow=${v} ...${handlers}>
+    <div class=${'stars' + (readonly ? ' readonly' : '') + (preview != null ? ' previewing' : '')} ref=${ref} style=${`--s:${size}px`}
+      role=${readonly ? 'img' : 'slider'} tabindex=${readonly ? null : 0}
+      aria-label=${`Rating ${v / 2} of 5 stars`} aria-valuemin="0" aria-valuemax="10" aria-valuenow=${v} aria-valuetext=${v ? `${v / 2} stars` : 'Not rated'} ...${handlers}>
       ${[1, 2, 3, 4, 5].map(i => {
         const fill = v >= i * 2 ? 1 : v === i * 2 - 1 ? 0.5 : 0;
-        return html`<span class="star" key=${i}>
+        return html`<span class=${'star' + (fill ? ' lit' : '')} key=${i}>
           <svg viewBox="0 0 24 24" width=${size} height=${size}><path class="star-bg" d=${STAR} /></svg>
           <span class="star-fill" style=${`width:${fill * 100}%`}>
             <svg viewBox="0 0 24 24" width=${size} height=${size}><path d=${STAR} /></svg>

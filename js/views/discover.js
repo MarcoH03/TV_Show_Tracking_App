@@ -87,9 +87,7 @@ function Browse() {
     ${clientId && html`<${TraktShelf} kind="anticipated" title="Most Anticipated" clientId=${clientId} />`}
     ${sched.loading && html`<div class="center-pad"><${Spinner} /></div>`}
     ${sched.data && html`<${Shelf} title="Airing Today" items=${sched.data.slice(0, 24)} />`}
-    ${sched.error && html`<${Empty} emoji="📡" title="You’re offline" text="Browse needs a connection. Your shows are still here." />`}
-    ${!clientId && html`<a class="callout subtle" href="#/profile/sources"><span class="callout-emoji">✨</span>
-      <div><strong>Want Trending & Anticipated lists?</strong><div class="sub">Add a free Trakt Client ID in Profile → Data Sources.</div></div></a>`}`;
+    ${sched.error && html`<${Empty} emoji="📡" title="You’re offline" text="Browse needs a connection. Your shows are still here." />`}`;
 }
 
 function Shelf({ title, items }) {
