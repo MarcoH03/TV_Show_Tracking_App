@@ -220,26 +220,30 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 }
 .segmented button.on { background: var(--bg-elev); font-weight: 600; box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 3px 1px rgba(0, 0, 0, .04); }
 @media (prefers-color-scheme: dark) { .segmented button.on { background: #636366; } }
-/* Scope bar (My Shows sections): one tile per section with its count above the name, so all of them
-   fit side by side on an iPhone without squeezing. On very narrow screens the row scrolls instead of overlapping. */
+/* Scope pills (My Shows sections): each sized to its label with the count beside it.
+   When they don't all fit, the row scrolls sideways and keeps the selected pill in view. */
 .scope-chips {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(60px, 1fr); gap: 6px;
-  overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
-  margin: 0 calc(-1 * var(--gutter)); padding: 2px var(--gutter) 6px;
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+  margin: 0 calc(-1 * var(--gutter)); padding: 2px var(--gutter) 6px; scroll-padding-inline: var(--gutter);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 .scope-chips::-webkit-scrollbar { display: none; }
 .scope-chip {
-  min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-  height: 54px; padding: 0 2px; border-radius: 14px; background: var(--bg-elev); color: var(--label2);
-  font-size: 11px; font-weight: 600; letter-spacing: -.1px; white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .05); transition: background .2s, color .2s, transform .2s var(--spring), box-shadow .2s;
+  flex: none; display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 8px 0 13px;
+  border-radius: 18px; background: var(--bg-elev); color: var(--label); white-space: nowrap;
+  font-size: 15px; font-weight: 500; letter-spacing: -.2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05); transition: background .2s, color .2s, transform .2s var(--spring);
 }
 .scope-chip:active { transform: scale(.95); }
-.scope-count { order: -1; font: 800 19px/1.1 var(--font-round); font-variant-numeric: tabular-nums; color: var(--c, var(--accent)); transition: color .2s; }
-.scope-dot { display: none; }
-.scope-chip.on { background: var(--c, var(--accent)); color: #fff; transform: translateY(-1px); box-shadow: 0 5px 14px color-mix(in srgb, var(--c, var(--accent)) 38%, transparent); }
-.scope-chip.on .scope-count { color: #fff; }
-@media (min-width: 600px) { .scope-chips { grid-auto-columns: minmax(96px, 140px); justify-content: start; } .scope-chip { font-size: 12px; } }
+.scope-dot { width: 8px; height: 8px; border-radius: 4px; background: var(--c, var(--accent)); flex: none; transition: background .2s; }
+.scope-count {
+  min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; display: grid; place-items: center;
+  font: 700 12px/1 var(--font-round); font-variant-numeric: tabular-nums; background: var(--fill2); color: var(--label2);
+}
+.scope-chip.on { background: var(--c, var(--accent)); color: #fff; font-weight: 600; box-shadow: 0 4px 12px color-mix(in srgb, var(--c, var(--accent)) 35%, transparent); }
+.scope-chip.on .scope-dot { background: #fff; }
+.scope-chip.on .scope-count { background: rgba(255, 255, 255, .25); color: #fff; }
 
 .seg-count { font-size: 11px; font-weight: 600; color: var(--label2); background: var(--fill); border-radius: 8px; padding: 0 6px; line-height: 16px; }
 
