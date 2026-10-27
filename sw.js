@@ -1,6 +1,6 @@
 // Service worker: makes the app work offline and handles notification taps.
 // Bump VERSION whenever app files change so installed copies update.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL = `shell-${VERSION}`;
 const IMAGES = 'images-v1';
 const API = 'api-v1';
@@ -10,7 +10,7 @@ const ASSETS = [
   'js/app.js', 'js/nav.js', 'js/store.js', 'js/db.js', 'js/ui.js', 'js/hooks.js', 'js/sync.js',
   'js/api/tvmaze.js', 'js/api/trakt.js', 'js/api/omdb.js',
   'js/views/common.js', 'js/views/show.js', 'js/views/library.js', 'js/views/discover.js',
-  'js/views/upcoming.js', 'js/views/lists.js', 'js/views/profile.js', 'js/views/install.js',
+  'js/views/upcoming.js', 'js/views/lists.js', 'js/views/profile.js', 'js/views/install.js', 'js/views/following.js',
   'js/vendor/preact-htm.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/icon.svg',
 ];

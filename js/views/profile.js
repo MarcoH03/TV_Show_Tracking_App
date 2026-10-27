@@ -7,6 +7,7 @@ import { enableNotifications, notificationsSupported, refreshAll } from '../sync
 import { Page, Poster, Icon, toast, confirmSheet, epCode, relDay, starText } from '../ui.js';
 import { isStandalone } from './install.js';
 import { goBack } from '../nav.js';
+import { FollowingView, FollowingLink } from './following.js';
 
 const ACCENTS = [
   ['pink', '#FF375F'], ['orange', '#FF9500'], ['green', '#30D158'], ['teal', '#30B0C7'],
@@ -16,6 +17,7 @@ const ACCENTS = [
 export function ProfileView({ section }) {
   if (section === 'sources') return html`<${Sources} />`;
   if (section === 'diary') return html`<${Diary} />`;
+  if (section === 'shows') return html`<${FollowingView} />`;
 
   const shows = Object.values(state.shows);
   const eps = Object.values(state.watched).reduce((n, m) => n + Object.keys(m).length, 0);
@@ -52,6 +54,9 @@ export function ProfileView({ section }) {
 
       <div class="section-head"><h2>Recently Watched</h2>${state.history.length > 0 && html`<a class="link" href="#/profile/diary">See all</a>`}</div>
       <${DiaryList} items=${state.history.slice(0, 5)} />
+
+      <div class="section-head"><h2>Following</h2><a class="link" href="#/profile/shows">See all</a></div>
+      <div class="group"><${FollowingLink} /></div>
 
       <div class="section-head"><h2>Settings</h2></div>
       <div class="group">

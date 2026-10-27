@@ -139,6 +139,9 @@ const paths = {
   refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
   edit: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z',
   eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Zm10-3a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z',
+  grid: 'M5 4h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm10 0h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1ZM5 14h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Zm10 0h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z',
+  rows: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  sort: 'M7 4v16M3.5 7.5 7 4l3.5 3.5M17 20V4M13.5 16.5 17 20l3.5-3.5',
 };
 
 export function Icon({ name, size = 24, fill, class: cls = '', stroke = 2 }) {
@@ -306,6 +309,21 @@ export function Empty({ emoji, title, text, children }) {
 
 export function ProgressBar({ pct, color }) {
   return html`<div class="progress"><span style=${`width:${Math.round(pct * 100)}%;${color ? 'background:' + color : ''}`}></span></div>`;
+}
+
+/** Circular progress ring (0–1) with content in the middle, drawn in the given colour. */
+export function ProgressRing({ pct, size = 34, stroke = 3.5, color = 'var(--accent)', children }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(1, pct || 0));
+  return html`<span class="ring-badge" style=${`--c:${color};width:${size}px;height:${size}px`}>
+    <svg width=${size} height=${size} viewBox=${`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle class="ring-track" cx=${size / 2} cy=${size / 2} r=${r} stroke-width=${stroke} />
+      <circle class="ring-fill" cx=${size / 2} cy=${size / 2} r=${r} stroke-width=${stroke}
+        stroke-dasharray=${c} stroke-dashoffset=${c * (1 - p)} transform=${`rotate(-90 ${size / 2} ${size / 2})`} />
+    </svg>
+    <span class="ring-label">${children}</span>
+  </span>`;
 }
 
 export function Spinner() { return html`<div class="spinner" role="progressbar" aria-label="Loading"></div>`; }

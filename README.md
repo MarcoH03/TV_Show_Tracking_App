@@ -34,6 +34,8 @@ and is hosted for free on GitHub Pages.
   - a premiere date that changes
 - **Add to Calendar:** exports your schedule as `.ics` with alerts, so iOS Calendar reminds you even when the app is closed.
 - **Profile:** stats, a ratings histogram, favorites and a watch diary.
+- **Following** (Profile → *All my shows*): every show you track as a poster grid or a list, filtered by status and sorted
+  how you like. Each poster has a badge in its status colour: a ring filled by your progress, the episodes you've watched, and how many are left.
 - **Import from Trakt / TV Forecast:** TV Forecast syncs with Trakt, so you can import your watched history,
   watchlist and ratings from a public Trakt profile.
 - **Backups:** export and import a JSON file, for example to move your data to another device.
