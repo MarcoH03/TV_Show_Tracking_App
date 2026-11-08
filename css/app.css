@@ -549,6 +549,30 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 .poster-stack .poster:nth-child(3) { transform: rotate(6deg); z-index: 1; }
 .following-count { font: 800 20px var(--font-round); color: var(--accent); }
 
+/* ---------- Sync (Profile → Sync between devices) ---------- */
+
+.sync-dot { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 15px; background: var(--c); color: #fff; }
+.sync-dot.small { width: 26px; height: 26px; border-radius: 8px; }
+.sync-dot .spinner { width: 18px; height: 18px; border-width: 2px; border-color: rgba(255, 255, 255, .35); border-top-color: #fff; }
+.sync-intro { display: flex; gap: 14px; align-items: flex-start; margin-top: 0; }
+.sync-intro p { margin: 0; font-size: 15px; line-height: 1.4; color: var(--label2); }
+.sync-intro-emoji { font-size: 34px; line-height: 1; }
+.sync-mode { margin: 18px 0 6px; }
+.sync-steps { margin: 14px 4px 12px; padding-left: 22px; display: grid; gap: 14px; font-size: 15px; line-height: 1.4; }
+.sync-steps li > .btn { display: flex; width: fit-content; margin-top: 8px; }
+.sync-steps .row-sub { display: block; white-space: normal; margin-top: 6px; font-size: 13px; }
+.row.field { gap: 12px; }
+.row.field > span { flex: none; width: 92px; color: var(--label); }
+.row.field input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font-size: 16px; padding: 4px 0; }
+.sync-advanced { margin-top: 12px; }
+.sync-advanced summary { cursor: pointer; color: var(--accent); font-size: 15px; padding: 6px 4px; }
+.sync-advanced .group { margin-top: 6px; }
+.sync-error { color: var(--red); font-size: 14px; margin: 12px 4px 0; }
+.sync-code-input { width: 100%; border: 0; background: none; outline: none; resize: vertical; padding: 12px 16px; font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--label); }
+.sync-code { display: block; padding: 10px; border-radius: 10px; background: var(--fill2); font-size: 12px; word-break: break-all; user-select: all; -webkit-user-select: all; }
+.sync-danger { margin-top: 28px; }
+.btn .spinner { width: 20px; height: 20px; border-color: rgba(255, 255, 255, .35); border-top-color: #fff; }
+
 /* ---------- Empty states, spinner, footnotes ---------- */
 
 .empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 48px 24px; gap: 8px; }
@@ -642,3 +666,5 @@ a.row:active, button.row:active, .row.episode:active { background: var(--fill2);
 }
 
 .row.static .row-sub { white-space: normal; }
+/* iOS won't let you type into fields inside an element with user-select: none. */
+.row input, .row textarea, .row select, .inline-form input { -webkit-user-select: text; user-select: text; }

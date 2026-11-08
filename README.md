@@ -46,6 +46,28 @@ and is hosted for free on GitHub Pages.
   - swipe from the left edge to go back
   - 7 accent colours to choose from
 
+## Sync between your devices
+
+**Profile → Sync between devices** keeps your iPhone, iPad and Mac showing the same data, with no server.
+Everything is stored as one file (`tv-tracker.json`) in a **private** GitHub repository of yours. Each device downloads it,
+merges it with its own data and uploads the result. The idea is the same as in the House Management app.
+
+- **Merging record by record:** each watched episode, each field of a show (status, rating, …), each list entry and each
+  setting is its own record with a timestamp, and the newest one wins. If you mark episodes on two devices at once, both are kept.
+- **Deletions travel too.** Removing a show, unmarking an episode or taking a show out of a list reaches your other devices.
+- **Every sync is a commit**, so the repository has the full history and any version can be restored.
+
+Setup (once):
+
+1. Create a private repository, for example `tv-tracker-data`. An existing private one also works: the shows use their own file.
+2. Create a [fine-grained token](https://github.com/settings/personal-access-tokens/new). Under *Repository access* choose only that
+   repository, and give it **Contents: Read and write**. The app's "Create Token" button pre-fills this.
+3. In the app: **Profile → Sync → Set Up**, then enter your username, the repository and the token.
+4. On each other device: **Profile → Sync → Join with Code**, and paste the code from *Add Another Device*.
+   The code includes the token, so only send it to yourself.
+
+Erasing data on a device disconnects it from sync first, so your other devices keep their data.
+
 ## Data sources
 
 | Source | Used for | Key needed |

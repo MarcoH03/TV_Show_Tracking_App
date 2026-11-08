@@ -8,6 +8,8 @@ import { Page, Poster, Icon, toast, confirmSheet, epCode, relDay, starText } fro
 import { isStandalone } from './install.js';
 import { goBack } from '../nav.js';
 import { FollowingView, FollowingLink } from './following.js';
+import { CloudView, useCloud, cloudStatusText, cloudColor } from './cloud.js';
+import { cloud } from '../cloud.js';
 
 const ACCENTS = [
   ['pink', '#FF375F'], ['orange', '#FF9500'], ['green', '#30D158'], ['teal', '#30B0C7'],
@@ -18,6 +20,7 @@ export function ProfileView({ section }) {
   if (section === 'sources') return html`<${Sources} />`;
   if (section === 'diary') return html`<${Diary} />`;
   if (section === 'shows') return html`<${FollowingView} />`;
+  if (section === 'sync') return html`<${CloudView} />`;
 
   const shows = Object.values(state.shows);
   const eps = Object.values(state.watched).reduce((n, m) => n + Object.keys(m).length, 0);
@@ -80,17 +83,37 @@ export function ProfileView({ section }) {
 
       <div class="section-head"><h2>Your Data</h2></div>
       <div class="group">
+        <${SyncRow} />
         <button class="row" onClick=${backup}><span class="row-main"><span class="row-title accent">Export backup</span><span class="row-sub">Save everything as a file (use it to move to another device)</span></span></button>
         <label class="row"><span class="row-main"><span class="row-title accent">Import backup</span><span class="row-sub">Restore from an exported file</span></span>
           <input type="file" accept="application/json,.json" hidden onChange=${restore} /></label>
-        <button class="row" onClick=${async () => { if (await confirmSheet({ title: 'Erase all data?', message: 'This removes every show, list, rating and watch history from this device.', confirm: 'Erase Everything' })) { resetAll(); toast('All data erased'); } }}>
+        <button class="row" onClick=${eraseAll}>
           <span class="row-main"><span class="row-title danger">Erase all data</span></span></button>
       </div>
       <p class="footnote center">
-        Your data is stored on this device${isStandalone() ? '' : ' (in this browser)'}. Export a backup now and then.<br />
+        ${cloud.configured ? 'Your data syncs through your private GitHub repository.' : html`Your data is stored on this device${isStandalone() ? '' : ' (in this browser)'}. Turn on sync or export a backup now and then.`}<br />
         Show data from <a href="https://www.tvmaze.com" target="_blank" rel="noopener">TVmaze</a>${state.settings.traktClientId ? ' & Trakt' : ''}.
       </p>
     </${Page}>`;
+}
+
+function SyncRow() {
+  useCloud();
+  return html`<a class="row" href="#/profile/sync">
+    <span class="sync-dot small" style=${`--c:${cloudColor()}`}><${Icon} name=${cloud.configured ? 'refresh' : 'close'} size=${13} stroke=${2.6} /></span>
+    <span class="row-main"><span class="row-title">Sync between devices</span><span class="row-sub">${cloudStatusText()}</span></span>
+    <${Icon} name="chevron" size=${16} class="chev" />
+  </a>`;
+}
+
+async function eraseAll() {
+  const message = cloud.configured
+    ? 'This removes every show, list, rating and watch history from this device and disconnects it from sync first, so your other devices keep their data.'
+    : 'This removes every show, list, rating and watch history from this device.';
+  if (!(await confirmSheet({ title: 'Erase all data?', message, confirm: 'Erase Everything' }))) return;
+  if (cloud.configured) cloud.disconnect();
+  resetAll();
+  toast('All data erased');
 }
 
 function notifSub() {
@@ -168,7 +191,10 @@ async function restore(e) {
   if (!file) return;
   try {
     const text = await file.text();
-    if (!(await confirmSheet({ title: 'Replace your data?', message: 'Importing replaces everything on this device with the backup.', confirm: 'Import', destructive: false }))) return;
+    const message = cloud.configured
+      ? 'Importing replaces everything with the backup — on this device and, through sync, on your other devices too.'
+      : 'Importing replaces everything on this device with the backup.';
+    if (!(await confirmSheet({ title: 'Replace your data?', message, confirm: 'Import', destructive: false }))) return;
     importData(text);
     toast('Backup restored ✓');
     refreshAll({ force: true });

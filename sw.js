@@ -1,6 +1,6 @@
 // Service worker: makes the app work offline and handles notification taps.
 // Bump VERSION whenever app files change so installed copies update.
-const VERSION = 'v7';
+const VERSION = 'v8';
 const SHELL = `shell-${VERSION}`;
 const IMAGES = 'images-v1';
 const API = 'api-v1';
@@ -8,7 +8,7 @@ const API = 'api-v1';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/nav.js', 'js/store.js', 'js/db.js', 'js/ui.js', 'js/hooks.js', 'js/sync.js',
-  'js/api/tvmaze.js', 'js/api/trakt.js', 'js/api/omdb.js',
+  'js/api/tvmaze.js', 'js/api/trakt.js', 'js/api/omdb.js', 'js/records.js', 'js/cloud.js', 'js/views/cloud.js',
   'js/views/common.js', 'js/views/show.js', 'js/views/library.js', 'js/views/discover.js',
   'js/views/upcoming.js', 'js/views/lists.js', 'js/views/profile.js', 'js/views/install.js', 'js/views/following.js',
   'js/vendor/preact-htm.js',

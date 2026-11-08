@@ -2,6 +2,7 @@ import { html, render, useState, useEffect } from './vendor/preact-htm.js';
 import { state, subscribe, flush } from './store.js';
 import { Icon, Overlays, closeTop } from './ui.js';
 import { refreshAll, updateBadge } from './sync.js';
+import { cloud } from './cloud.js';
 import { LibraryView } from './views/library.js';
 import { ShowView } from './views/show.js';
 import { DiscoverView } from './views/discover.js';
@@ -119,6 +120,7 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', flush);
 updateBadge();
+cloud.init(); // sync with your other devices, if set up
 
 // Escape closes sheets on iPad/Mac keyboards.
 window.addEventListener('keydown', e => { if (e.key === 'Escape') closeTop(); });
